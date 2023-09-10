@@ -15,7 +15,7 @@ require_relative './cocoapods/codegen_utils.rb'
 require_relative './cocoapods/utils.rb'
 require_relative './cocoapods/new_architecture.rb'
 require_relative './cocoapods/local_podspec_patch.rb'
-require_relative './cocoapods/bridgeless.rb'
+require_relative './cocoapods/runtime.rb'
 
 $CODEGEN_OUTPUT_DIR = 'build/generated/ios'
 $CODEGEN_COMPONENT_DIR = 'react/renderer/components'
@@ -35,11 +35,16 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-# This function returns the min iOS version supported by React Native
-# By using this function, you won't have to manually change your Podfile
-# when we change the minimum version supported by the framework.
+
 def min_ios_version_supported
   return '13.4'
+end
+
+# This function returns the min supported OS versions supported by React Native
+# By using this function, you won't have to manually change your Podfile
+# when we change the minimum version supported by the framework.
+def min_supported_versions
+  return  { :ios => min_ios_version_supported }
 end
 
 # This function prepares the project for React Native, before processing
@@ -131,7 +136,7 @@ def use_react_native! (
   end
 
   pod 'React-jsiexecutor', :path => "#{prefix}/ReactCommon/jsiexecutor"
-  pod 'React-jsinspector', :path => "#{prefix}/ReactCommon/jsinspector"
+  pod 'React-jsinspector', :path => "#{prefix}/ReactCommon/jsinspector-modern"
 
   pod 'React-callinvoker', :path => "#{prefix}/ReactCommon/callinvoker"
   pod 'React-runtimeexecutor', :path => "#{prefix}/ReactCommon/runtimeexecutor"

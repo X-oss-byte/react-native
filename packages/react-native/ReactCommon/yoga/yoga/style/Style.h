@@ -13,7 +13,6 @@
 #include <type_traits>
 
 #include <yoga/Yoga.h>
-#include <yoga/Yoga-internal.h>
 
 #include <yoga/bits/NumericBitfield.h>
 #include <yoga/numeric/FloatOptional.h>
@@ -23,17 +22,21 @@ namespace facebook::yoga {
 
 class YOGA_EXPORT Style {
   template <typename Enum>
-  using Values = detail::Values<enums::count<Enum>()>;
+  using Values = std::array<CompactValue, enums::count<Enum>()>;
 
 public:
   using Dimensions = Values<YGDimension>;
   using Edges = Values<YGEdge>;
   using Gutters = Values<YGGutter>;
 
+  static constexpr float DefaultFlexGrow = 0.0f;
+  static constexpr float DefaultFlexShrink = 0.0f;
+  static constexpr float WebDefaultFlexShrink = 1.0f;
+
   template <typename T>
   struct BitfieldRef {
     Style& style;
-    size_t offset;
+    uint8_t offset;
     operator T() const { return getEnumData<T>(style.flags, offset); }
     BitfieldRef<T>& operator=(T x) {
       setEnumData<T>(style.flags, offset, x);
@@ -81,24 +84,24 @@ public:
   ~Style() = default;
 
 private:
-  static constexpr size_t directionOffset = 0;
-  static constexpr size_t flexdirectionOffset =
+  static constexpr uint8_t directionOffset = 0;
+  static constexpr uint8_t flexdirectionOffset =
       directionOffset + minimumBitCount<YGDirection>();
-  static constexpr size_t justifyContentOffset =
+  static constexpr uint8_t justifyContentOffset =
       flexdirectionOffset + minimumBitCount<YGFlexDirection>();
-  static constexpr size_t alignContentOffset =
+  static constexpr uint8_t alignContentOffset =
       justifyContentOffset + minimumBitCount<YGJustify>();
-  static constexpr size_t alignItemsOffset =
+  static constexpr uint8_t alignItemsOffset =
       alignContentOffset + minimumBitCount<YGAlign>();
-  static constexpr size_t alignSelfOffset =
+  static constexpr uint8_t alignSelfOffset =
       alignItemsOffset + minimumBitCount<YGAlign>();
-  static constexpr size_t positionTypeOffset =
+  static constexpr uint8_t positionTypeOffset =
       alignSelfOffset + minimumBitCount<YGAlign>();
-  static constexpr size_t flexWrapOffset =
+  static constexpr uint8_t flexWrapOffset =
       positionTypeOffset + minimumBitCount<YGPositionType>();
-  static constexpr size_t overflowOffset =
+  static constexpr uint8_t overflowOffset =
       flexWrapOffset + minimumBitCount<YGWrap>();
-  static constexpr size_t displayOffset =
+  static constexpr uint8_t displayOffset =
       overflowOffset + minimumBitCount<YGOverflow>();
 
   uint32_t flags = 0;
@@ -112,7 +115,7 @@ private:
   Edges padding_ = {};
   Edges border_ = {};
   Gutters gap_ = {};
-  Dimensions dimensions_{CompactValue::ofAuto()};
+  Dimensions dimensions_{CompactValue::ofAuto(), CompactValue::ofAuto()};
   Dimensions minDimensions_ = {};
   Dimensions maxDimensions_ = {};
   // Yoga specific properties, not compatible with flexbox specification
